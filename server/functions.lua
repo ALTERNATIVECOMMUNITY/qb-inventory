@@ -934,15 +934,22 @@ function TriggerHook(hookType, ...)
     end
 end
 
+-- Hook Helpers
+
+local function buildPlayerInventory(player)
+    return {
+        slots = Config.MaxSlots,
+        maxweight = Config.MaxWeight,
+        items = player?.PlayerData?.items or {},
+    }
+end
+
 local function resolveInventoryContext(inventory, id, player)
-    local inventoryType = (inventory == 'player' and 'player') or (Drops[id] and 'drop') or inventory:match('(trunk)%-') or inventory:match('(glovebox)%-')
+    if not inventory or not id then return end
+    local inventoryType = GetInventoryType(inventory)
     if inventoryType == 'player' then
         player = player or exports['qb-core']:GetPlayer(id)
-        return inventoryType, {
-            slots = Config.MaxSlots,
-            maxweight = Config.MaxWeight,
-            items = player?.PlayerData?.items or {},
-        }
+        return inventoryType, buildPlayerInventory(player)
     end
     if inventoryType == 'drop' then return inventoryType, Drops[id] end
 
