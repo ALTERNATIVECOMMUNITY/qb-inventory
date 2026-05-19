@@ -145,12 +145,7 @@ RegisterNetEvent('qb-inventory:client:updateInventory', function(fromInventory, 
         items = PlayerData.items
     end
 
-    local otherItems = nil
-    if toInventory ~= 'player' then
-        otherItems = toItems
-    else
-        otherItems = fromItems
-    end
+    local otherItems = toInventory ~= 'player' and toItems or fromItems
 
     SendNUIMessage({
         action = 'update',
