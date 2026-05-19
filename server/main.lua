@@ -5,6 +5,7 @@ RegisteredShops = {}
 Hooks = {
     ItemMoved = {},
     ItemBought = {},
+    InventoryOpened = {},
 }
 
 CreateThread(function()

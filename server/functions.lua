@@ -526,6 +526,8 @@ function OpenInventoryById(source, targetId)
         slots = Config.MaxSlots,
         inventory = targetItems
     }
+    local hookData = buildHookData('InventoryOpened', source, QBPlayer, targetId, TargetPlayer)
+    if TriggerHook('InventoryOpened', 'player', hookData) == false then return end
     Wait(1500)
     Player(targetId).state.inv_busy = true
     TriggerClientEvent('qb-inventory:client:openInventory', source, playerItems, formattedInventory)
@@ -614,6 +616,8 @@ function OpenInventory(source, identifier, data)
     if not QBPlayer then return end
 
     if not identifier then
+        local hookData = buildHookData('InventoryOpened', source, QBPlayer)
+        if TriggerHook('InventoryOpened', nil, hookData) == false then return end
         Player(source).state.inv_busy = true
         TriggerClientEvent('qb-inventory:client:openInventory', source, QBPlayer.PlayerData.items)
         return
@@ -635,6 +639,8 @@ function OpenInventory(source, identifier, data)
     inventory.maxweight = (data and data.maxweight) or (inventory and inventory.maxweight) or Config.StashSize.maxweight
     inventory.slots = (data and data.slots) or (inventory and inventory.slots) or Config.StashSize.slots
     inventory.label = (data and data.label) or (inventory and inventory.label) or identifier
+    local hookData = buildHookData('InventoryOpened', source, QBPlayer, identifier, identifier, inventory)
+    if TriggerHook('InventoryOpened', GetInventoryType(identifier), hookData) == false then return end
     inventory.isOpen = source
 
     local formattedInventory = {
@@ -985,10 +991,32 @@ local function buildShopData(shopType, shopId, itemSlot, amount, toId)
     }
 end
 
+local function buildOpenedData(id, player, otherId, otherPlayer)
+    local inventoryType, otherInventoryData = resolveInventoryContext(otherId, otherId, otherPlayer)
+    return {
+        source = id,
+        sourceInventory = buildPlayerInventory(player),
+        inventoryId = otherId,
+        inventory = otherInventoryData,
+    }
+end
+
+function GetInventoryType(identifier)
+    if not identifier then return end
+    if type(identifier) == 'number' then return 'player' end
+    if identifier:match('otherplayer%-') then return 'player' end
+    if identifier:match('trunk%-') then return 'trunk' end
+    if identifier:match('glovebox%-') then return 'glovebox' end
+    if Inventories[identifier] then return 'inventory' end
+    if Drops[identifier] then return 'drop' end
+end
+
 function buildHookData(hookType, ...)
     if hookType == 'ItemMoved' then
         return buildMovedData(...)
     elseif hookType == 'ItemBought' then
         return buildShopData(...)
+    elseif hookType == 'InventoryOpened' then
+        return buildOpenedData(...)
     end
 end
