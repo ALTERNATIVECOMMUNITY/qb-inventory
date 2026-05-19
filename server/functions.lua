@@ -992,7 +992,7 @@ local function buildShopData(shopType, shopId, itemSlot, amount, toId)
 end
 
 local function buildOpenedData(id, player, otherId, otherPlayer)
-    local inventoryType, otherInventoryData = resolveInventoryContext(otherId, otherId, otherPlayer)
+    local _, otherInventoryData = resolveInventoryContext(otherId, otherId, otherPlayer)
     return {
         source = id,
         sourceInventory = buildPlayerInventory(player),
