@@ -1003,7 +1003,7 @@ end
 
 function GetInventoryType(identifier)
     if not identifier then return end
-    if type(identifier) == 'number' then return 'player' end
+    if identifier == 'player' or type(identifier) == 'number' then return 'player' end
     if identifier:match('otherplayer%-') then return 'player' end
     if identifier:match('trunk%-') then return 'trunk' end
     if identifier:match('glovebox%-') then return 'glovebox' end
