@@ -555,7 +555,8 @@ function CreateShop(shopData)
             label = shopData.label,
             coords = shopData.coords,
             slots = #shopData.items,
-            items = SetupShopItems(shopData.items)
+            items = SetupShopItems(shopData.items),
+            type = shopData.type,
         }
     else
         for key, data in pairs(shopData) do
@@ -567,7 +568,8 @@ function CreateShop(shopData)
                         label = data.label,
                         coords = data.coords,
                         slots = #data.items,
-                        items = SetupShopItems(data.items)
+                        items = SetupShopItems(data.items),
+                        type = shopData.type,
                     }
                 else
                     CreateShop(data)
@@ -595,6 +597,8 @@ function OpenShop(source, name)
             if distance > 5.0 then return end
         end
     end
+    local hookData = buildHookData('ShopOpened', source, Player, name)
+    if TriggerHook('ShopOpened', GetInventoryType(name), hookData) == false then return end
     local formattedInventory = {
         name = 'shop-' .. RegisteredShops[name].name,
         label = RegisteredShops[name].label,
@@ -1001,6 +1005,14 @@ local function buildOpenedData(id, player, otherId, otherPlayer)
     }
 end
 
+local function buildShopOpenedData(source, player, shopName)
+    return {
+        source = source,
+        sourceInventory = buildPlayerInventory(player),
+        shop = RegisteredShops[shopName],
+    }
+end
+
 function GetInventoryType(identifier)
     if not identifier then return end
     if identifier == 'player' or type(identifier) == 'number' then return 'player' end
@@ -1009,6 +1021,8 @@ function GetInventoryType(identifier)
     if identifier:match('glovebox%-') then return 'glovebox' end
     if Inventories[identifier] then return 'inventory' end
     if Drops[identifier] then return 'drop' end
+    local shopData = RegisteredShops[identifier]
+    if shopData then return shopData.type or shopData.name:gsub('%d+$', '') end -- infer type from name if necessary
 end
 
 function buildHookData(hookType, ...)
@@ -1018,5 +1032,7 @@ function buildHookData(hookType, ...)
         return buildShopData(...)
     elseif hookType == 'InventoryOpened' then
         return buildOpenedData(...)
+    elseif hookType == 'ShopOpened' then
+        return buildShopOpenedData(...)
     end
 end
