@@ -124,13 +124,20 @@ end)
 -- Functions
 
 function checkWeapon(source, item)
-    local currentWeapon = type(item) == 'table' and item.name or item
+    local currentWeapon = item
     local ped = GetPlayerPed(source)
     local weapon = GetSelectedPedWeapon(ped)
     local weaponInfo = QBCore.Shared.Weapons[weapon]
+    local info = {}
+
+    if type(item) == 'table' then
+        currentWeapon = item.name
+        info = item.info or {}
+    end
+
     if weaponInfo and weaponInfo.name == currentWeapon then
         RemoveWeaponFromPed(ped, weapon)
-        TriggerClientEvent('qb-weapons:client:UseWeapon', source, { name = currentWeapon }, false)
+        TriggerClientEvent('qb-weapons:client:UseWeapon', source, { name = currentWeapon, info = info }, false)
     end
 end
 
