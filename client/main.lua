@@ -19,7 +19,8 @@ RegisterNetEvent('QBCore:Client:UpdateObject', function()
     QBCore = exports['qb-core']:GetCoreObject()
 end)
 
-RegisterNetEvent('QBCore:Player:SetPlayerData', function(val)
+RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
+    if key ~= 'all' then return end
     PlayerData = val
 end)
 
