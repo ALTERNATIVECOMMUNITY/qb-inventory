@@ -4,6 +4,7 @@ Drops = {}
 RegisteredShops = {}
 Hooks = {
     ItemMoved = {},
+    ItemUsed = {},
     ItemBought = {},
     InventoryOpened = {},
     ShopOpened = {},
@@ -189,10 +190,12 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
     if not itemData then return end
     local itemInfo = QBCore.Shared.Items[itemData.name]
     if itemData.type == 'weapon' then
+        local hookData = buildHookData('ItemUsed', source, exports['qb-core']:GetPlayer(source), itemData)
+        if TriggerHook('ItemUsed', item.type, hookData) == false then return end
         TriggerClientEvent('qb-weapons:client:UseWeapon', src, itemData, itemData.info.quality and itemData.info.quality > 0)
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
     elseif itemData.name == 'id_card' then
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', source, itemInfo, 'use')
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
@@ -217,7 +220,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
             end
         end
     elseif itemData.name == 'driver_license' then
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
@@ -240,7 +243,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
             end
         end
     else
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
     end
 end)

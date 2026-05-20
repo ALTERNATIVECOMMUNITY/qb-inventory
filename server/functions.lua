@@ -195,10 +195,12 @@ end
 
 exports('SetItemData', SetItemData)
 
-function UseItem(itemName, ...)
+function UseItem(itemName, source, item, ...)
     local itemData = QBCore.Functions.CanUseItem(itemName)
+    local hookData = buildHookData('ItemUsed', source, exports['qb-core']:GetPlayer(source), item)
+    if TriggerHook('ItemUsed', item.type, hookData) == false then return false end
     if type(itemData) == 'table' and itemData.func then
-        itemData.func(...)
+        itemData.func(source, item, ...)
     end
 end
 
@@ -982,6 +984,14 @@ local function buildMovedData(fromInventory, toInventory, fromId, toId, fromSlot
     }
 end
 
+local function buildUsedData(source, player, item)
+    return {
+        source = source,
+        sourceInventory = buildPlayerInventory(player),
+        item = item,
+    }
+end
+
 local function buildShopData(shopType, shopId, itemSlot, amount, toId)
     local shopData = RegisteredShops[shopId]
     local itemData = shopData.items[itemSlot]
@@ -1028,6 +1038,8 @@ end
 function buildHookData(hookType, ...)
     if hookType == 'ItemMoved' then
         return buildMovedData(...)
+    elseif hookType == 'ItemUsed' then
+        return buildUsedData(...)
     elseif hookType == 'ItemBought' then
         return buildShopData(...)
     elseif hookType == 'InventoryOpened' then
