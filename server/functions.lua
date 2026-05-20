@@ -569,7 +569,7 @@ function CreateShop(shopData)
                         coords = data.coords,
                         slots = #data.items,
                         items = SetupShopItems(data.items),
-                        type = shopData.type,
+                        type = data.type,
                     }
                 else
                     CreateShop(data)
