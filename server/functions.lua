@@ -698,6 +698,7 @@ exports('RemoveInventory', RemoveInventory)
 --- @param slot number (optional) The slot to add the item to. If not provided, it will find the first available slot.
 --- @param info table (optional) Additional information about the item.
 --- @param reason string (optional) The reason for adding the item.
+--- @param isInternalMove boolean (optional) Internal parameter suppresses the ItemAdded hook.
 --- @return boolean Returns true if the item was successfully added, false otherwise.
 function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
     local itemInfo = QBCore.Shared.Items[item:lower()]
