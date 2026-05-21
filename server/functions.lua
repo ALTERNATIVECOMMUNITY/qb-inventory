@@ -1045,18 +1045,16 @@ function GetInventoryType(identifier)
     if shopData then return shopData.type or (shopData.name:gsub('%d+$', '')) end -- infer type from name if necessary
 end
 
+local hookBuilders = {
+    ItemMoved = buildMovedData,
+    ItemUsed = buildUsedData,
+    ItemBought = buildShopData,
+    ItemAdded = buildItemAddedData,
+    InventoryOpened = buildOpenedData,
+    ShopOpened = buildShopOpenedData,
+}
+
 function buildHookData(hookType, ...)
-    if hookType == 'ItemMoved' then
-        return buildMovedData(...)
-    elseif hookType == 'ItemUsed' then
-        return buildUsedData(...)
-    elseif hookType == 'ItemBought' then
-        return buildShopData(...)
-    elseif hookType == 'ItemAdded' then
-        return buildItemAddedData(...)
-    elseif hookType == 'InventoryOpened' then
-        return buildOpenedData(...)
-    elseif hookType == 'ShopOpened' then
-        return buildShopOpenedData(...)
-    end
+    local builder = hookBuilders[hookType]
+    if builder then return builder(...) end
 end
