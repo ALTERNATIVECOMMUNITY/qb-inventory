@@ -699,7 +699,7 @@ exports('RemoveInventory', RemoveInventory)
 --- @param info table (optional) Additional information about the item.
 --- @param reason string (optional) The reason for adding the item.
 --- @return boolean Returns true if the item was successfully added, false otherwise.
-function AddItem(identifier, item, amount, slot, info, reason)
+function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
     local itemInfo = QBCore.Shared.Items[item:lower()]
     if not itemInfo then
         print('AddItem: Invalid item')
@@ -728,64 +728,59 @@ function AddItem(identifier, item, amount, slot, info, reason)
     end
 
     local totalWeight = GetTotalWeight(inventory)
+    amount = tonumber(amount) or 1
     if totalWeight + (itemInfo.weight * amount) > inventoryWeight then
         print('AddItem: Not enough weight available')
         return false
     end
 
-    amount = tonumber(amount) or 1
-    local updated = false
+    -- pre-commit hook data
+    if not itemInfo.unique then slot = slot or GetFirstSlotByItem(inventory, item) end
+    local currentItem = slot and inventory[slot]
+    local pendingItem = {
+        name = item,
+        amount = currentItem and (not currentItem.unique and currentItem.amount + amount) or amount,
+        info = currentItem?.info or info or {},
+        label = itemInfo.label,
+        description = itemInfo.description or '',
+        weight = itemInfo.weight,
+        type = itemInfo.type,
+        unique = itemInfo.unique,
+        useable = itemInfo.useable,
+        image = itemInfo.image,
+        shouldClose = itemInfo.shouldClose,
+        slot = slot or GetFirstFreeSlot(inventory, inventorySlots),
+        combinable = itemInfo.combinable
+    }
+    slot = pendingItem.slot
+    if not slot then
+        print('AddItem: No free slot available')
+        return false
+    end
 
-    if not itemInfo.unique then
-        slot = slot or GetFirstSlotByItem(inventory, item)
-        if slot then
-            for _, invItem in pairs(inventory) do
-                if invItem.slot == slot then
-                    invItem.amount = invItem.amount + amount
-                    updated = true
-                    break
-                end
-            end
+    if itemInfo.type == 'weapon' then
+        if not pendingItem.info.serie then
+            pendingItem.info.serie = tostring(QBCore.Shared.RandomInt(2) .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(1) .. QBCore.Shared.RandomStr(2) .. QBCore.Shared.RandomInt(3) .. QBCore.Shared.RandomStr(4))
+        end
+        if not pendingItem.info.quality then
+            pendingItem.info.quality = 100
         end
     end
 
-    if not updated then
-        slot = slot or GetFirstFreeSlot(inventory, inventorySlots)
-        if not slot then
-            print('AddItem: No free slot available')
-            return false
-        end
-
-        inventory[slot] = {
-            name = item,
-            amount = amount,
-            info = info or {},
-            label = itemInfo.label,
-            description = itemInfo.description or '',
-            weight = itemInfo.weight,
-            type = itemInfo.type,
-            unique = itemInfo.unique,
-            useable = itemInfo.useable,
-            image = itemInfo.image,
-            shouldClose = itemInfo.shouldClose,
-            slot = slot,
-            combinable = itemInfo.combinable
-        }
-
-        if itemInfo.type == 'weapon' then
-            if not inventory[slot].info.serie then
-                inventory[slot].info.serie = tostring(QBCore.Shared.RandomInt(2) .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(1) .. QBCore.Shared.RandomStr(2) .. QBCore.Shared.RandomInt(3) .. QBCore.Shared.RandomStr(4))
-            end
-            if not inventory[slot].info.quality then
-                inventory[slot].info.quality = 100
-            end
+    local resourceName = GetInvokingResource() or 'qb-inventory'
+    if not isInternalMove then
+        local hookData = buildHookData('ItemAdded', identifier, pendingItem, slot, amount, player, reason, resourceName)
+        local mutatedInfo = TriggerHook('ItemAdded', pendingItem.type, hookData)
+        if mutatedInfo == false then return false end
+        if type(mutatedInfo) == 'table' then
+            pendingItem.info = mutatedInfo
         end
     end
+    inventory[slot] = pendingItem
 
     if player then player.Functions.SetPlayerData('items', inventory) end
     local invName = player and GetPlayerName(identifier) .. ' (' .. identifier .. ')' or identifier
     local addReason = reason or 'No reason specified'
-    local resourceName = GetInvokingResource() or 'qb-inventory'
     TriggerEvent(
         'qb-log:server:CreateLog',
         'playerinventory',
@@ -992,6 +987,20 @@ local function buildUsedData(source, player, item)
     }
 end
 
+local function buildItemAddedData(identifier, item, slot, amount, player, reason, resource)
+    local inventoryType, inventoryData = resolveInventoryContext(identifier, identifier, player)
+    return {
+        toId = identifier,
+        toInventory = inventoryData,
+        toType = inventoryType,
+        toSlot = slot,
+        item = item,
+        amount = amount,
+        reason = reason,
+        resource = resource,
+    }
+end
+
 local function buildShopData(shopType, shopId, itemSlot, amount, toId)
     local shopData = RegisteredShops[shopId]
     local itemData = shopData.items[itemSlot]
@@ -1042,6 +1051,8 @@ function buildHookData(hookType, ...)
         return buildUsedData(...)
     elseif hookType == 'ItemBought' then
         return buildShopData(...)
+    elseif hookType == 'ItemAdded' then
+        return buildItemAddedData(...)
     elseif hookType == 'InventoryOpened' then
         return buildOpenedData(...)
     elseif hookType == 'ShopOpened' then

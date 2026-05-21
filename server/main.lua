@@ -6,6 +6,7 @@ Hooks = {
     ItemMoved = {},
     ItemUsed = {},
     ItemBought = {},
+    ItemAdded = {},
     InventoryOpened = {},
     ShopOpened = {},
 }
@@ -531,13 +532,13 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
             if TriggerHook('ItemMoved', 'stacked', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
             if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'stacked item') then
-                AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item')
+                AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item', true)
             end
         elseif not toItem and toAmount < fromAmount then
             if TriggerHook('ItemMoved', 'split', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
             if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'split item') then
-                AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item')
+                AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item', true)
             end
         else
             if toItem then
@@ -546,14 +547,14 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
                 if TriggerHook('ItemMoved', 'swapped', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
                 if RemoveItem(fromId, fromItem.name, fromItemAmount, fromSlot, 'swapped item') and RemoveItem(toId, toItem.name, toItemAmount, toSlot, 'swapped item') then
-                    AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item')
-                    AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item')
+                    AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item', true)
+                    AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item', true)
                 end
             else
                 if TriggerHook('ItemMoved', 'moved', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
                 if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'moved item') then
-                    AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item')
+                    AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item', true)
                 end
             end
         end
