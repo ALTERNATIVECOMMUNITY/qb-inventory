@@ -1041,7 +1041,7 @@ function GetInventoryType(identifier)
     if Inventories[identifier] then return 'inventory' end
     if Drops[identifier] then return 'drop' end
     local shopData = RegisteredShops[identifier]
-    if shopData then return shopData.type or shopData.name:gsub('%d+$', '') end -- infer type from name if necessary
+    if shopData then return shopData.type or (shopData.name:gsub('%d+$', '')) end -- infer type from name if necessary
 end
 
 function buildHookData(hookType, ...)
