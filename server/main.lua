@@ -4,6 +4,7 @@ Drops = {}
 RegisteredShops = {}
 Events = {
     ItemMoved = { hooks = {}, listeners = {} },
+    ItemDropped = { hooks = {}, listeners = {} },
     ItemUsed = { hooks = {}, listeners = {} },
     ItemBought = { hooks = {}, listeners = {} },
     ItemAdded = { hooks = {}, listeners = {} },
@@ -306,6 +307,9 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
     end
     local playerPed = GetPlayerPed(src)
     local playerCoords = GetEntityCoords(playerPed)
+    local hookData = buildHookData('ItemDropped', src, Player, playerCoords, item.fromSlot)
+    if not hookData.item then cb(false) return end
+    if TriggerHook('ItemDropped', hookData.item.type, hookData) == false then cb(false) return end
     if RemoveItem(src, item.name, item.amount, item.fromSlot, 'dropped item') then
         if item.type == 'weapon' then checkWeapon(src, item) end
         TaskPlayAnim(playerPed, 'pickup_object', 'pickup_low', 8.0, -8.0, 2000, 0, 0, false, false, false)
@@ -319,6 +323,8 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
                 return length
             end
         })
+        hookData.dropId = newDropId
+        hookData.netId = dropId
         if not Drops[newDropId] then
             Drops[newDropId] = {
                 name = newDropId,
@@ -335,6 +341,7 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
         else
             table.insert(Drops[newDropId].items, item)
         end
+        TriggerListener('ItemDropped', hookData.item.type, hookData)
         cb(dropId)
     else
         cb(false)

@@ -67,6 +67,15 @@ local function buildMovedData(fromInventory, toInventory, fromId, toId, fromSlot
     }
 end
 
+local function buildItemDroppedData(source, player, coords, slot)
+    return {
+        source = source,
+        sourceInventory = buildPlayerInventory(player),
+        coords = coords,
+        item = player.PlayerData.items[slot],
+    }
+end
+
 local function buildUsedData(source, player, item)
     return {
         source = source,
@@ -134,6 +143,7 @@ end
 
 local hookBuilders = {
     ItemMoved = buildMovedData,
+    ItemDropped = buildItemDroppedData,
     ItemUsed = buildUsedData,
     ItemBought = buildShopData,
     ItemAdded = buildItemAddedData,
