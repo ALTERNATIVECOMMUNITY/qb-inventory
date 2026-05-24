@@ -388,12 +388,14 @@ QBCore.Functions.CreateCallback('qb-inventory:server:attemptPurchase', function(
 
     local price = shopInfo.items[itemInfo.slot].price * amount
     if Player.PlayerData.money.cash >= price then
-        local hookData = buildHookData('ItemBought', 'shop', shop, itemInfo.slot, amount, source)
-        if TriggerHook('ItemBought', 'shop', hookData) == false then cb(false) return end
+        local shopType = GetInventoryType(shop)
+        local hookData = buildHookData('ItemBought', shopType, shop, itemInfo.slot, amount, source)
+        if TriggerHook('ItemBought', shopType, hookData) == false then cb(false) return end
         Player.Functions.RemoveMoney('cash', price, 'shop-purchase')
         AddItem(source, itemInfo.name, amount, nil, itemInfo.info, 'shop-purchase')
         shopInfo.items[itemInfo.slot].amount -= amount
         TriggerEvent('qb-shops:server:UpdateShopItems', shop, itemInfo, amount)
+        TriggerListener('ItemBought', shopType, hookData)
         cb(true)
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t('notify.notencash'), 'error')
