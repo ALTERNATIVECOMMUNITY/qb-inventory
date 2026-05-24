@@ -202,6 +202,7 @@ function UseItem(itemName, source, item, ...)
     if type(itemData) == 'table' and itemData.func then
         itemData.func(source, item, ...)
     end
+    TriggerListener('ItemUsed', item.type, hookData)
 end
 
 exports('UseItem', UseItem)
@@ -533,6 +534,7 @@ function OpenInventoryById(source, targetId)
     Wait(1500)
     Player(targetId).state.inv_busy = true
     TriggerClientEvent('qb-inventory:client:openInventory', source, playerItems, formattedInventory)
+    TriggerListener('InventoryOpened', 'player', hookData)
 end
 
 exports('OpenInventoryById', OpenInventoryById)
@@ -609,6 +611,7 @@ function OpenShop(source, name)
         inventory = RegisteredShops[name].items
     }
     TriggerClientEvent('qb-inventory:client:openInventory', source, Player.PlayerData.items, formattedInventory)
+    TriggerListener('ShopOpened', GetInventoryType(name), hookData)
 end
 
 exports('OpenShop', OpenShop)
@@ -626,6 +629,7 @@ function OpenInventory(source, identifier, data)
         if TriggerHook('InventoryOpened', nil, hookData) == false then return end
         Player(source).state.inv_busy = true
         TriggerClientEvent('qb-inventory:client:openInventory', source, QBPlayer.PlayerData.items)
+        TriggerListener('InventoryOpened', nil, hookData)
         return
     end
 
@@ -657,6 +661,7 @@ function OpenInventory(source, identifier, data)
         inventory = inventory.items
     }
     TriggerClientEvent('qb-inventory:client:openInventory', source, QBPlayer.PlayerData.items, formattedInventory)
+    TriggerListener('InventoryOpened', GetInventoryType(identifier), hookData)
 end
 
 exports('OpenInventory', OpenInventory)
@@ -768,9 +773,10 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
         end
     end
 
+    local hookData
     local resourceName = GetInvokingResource() or 'qb-inventory'
     if not isInternalMove then
-        local hookData = buildHookData('ItemAdded', identifier, pendingItem, slot, amount, player, reason, resourceName)
+        hookData = buildHookData('ItemAdded', identifier, pendingItem, slot, amount, player, reason, resourceName)
         local mutatedInfo = TriggerHook('ItemAdded', pendingItem.type, hookData)
         if mutatedInfo == false then return false end
         if type(mutatedInfo) == 'table' then
@@ -780,6 +786,7 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
     inventory[slot] = pendingItem
 
     if player then player.SetPlayerData('items', inventory) end
+    if hookData then TriggerListener('ItemAdded', pendingItem.type, hookData) end
     local invName = player and GetPlayerName(identifier) .. ' (' .. identifier .. ')' or identifier
     local addReason = reason or 'No reason specified'
     TriggerEvent(

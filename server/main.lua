@@ -202,6 +202,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
         if TriggerHook('ItemUsed', item.type, hookData) == false then return end
         TriggerClientEvent('qb-weapons:client:UseWeapon', src, itemData, itemData.info.quality and itemData.info.quality > 0)
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
+        TriggerListener('ItemUsed', item.type, hookData)
     elseif itemData.name == 'id_card' then
         if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', source, itemInfo, 'use')
@@ -470,6 +471,7 @@ QBCore.Functions.CreateCallback('qb-inventory:server:giveItem', function(source,
     TriggerClientEvent('qb-inventory:client:giveAnim', target)
     TriggerClientEvent('qb-inventory:client:ItemBox', target, itemInfo, 'add', giveAmount)
     if Player(target).state.inv_busy then TriggerClientEvent('qb-inventory:client:updateInventory', target) end
+    TriggerListener('ItemMoved', 'given', hookData)
     cb(true)
 end)
 
@@ -541,13 +543,17 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
             if TriggerHook('ItemMoved', 'stacked', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
             if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'stacked item') then
-                AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item', true)
+                if AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item', true) then
+                    TriggerListener('ItemMoved', 'stacked', hookData)
+                end
             end
         elseif not toItem and toAmount < fromAmount then
             if TriggerHook('ItemMoved', 'split', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
             if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'split item') then
-                AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item', true)
+                if AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item', true) then
+                    TriggerListener('ItemMoved', 'split', hookData)
+                end
             end
         else
             if toItem then
@@ -556,14 +562,17 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
                 if TriggerHook('ItemMoved', 'swapped', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
                 if RemoveItem(fromId, fromItem.name, fromItemAmount, fromSlot, 'swapped item') and RemoveItem(toId, toItem.name, toItemAmount, toSlot, 'swapped item') then
-                    AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item', true)
-                    AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item', true)
+                    local fromAdded = AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item', true)
+                    local toAdded = AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item', true)
+                    if fromAdded and toAdded then TriggerListener('ItemMoved', 'swapped', hookData) end
                 end
             else
                 if TriggerHook('ItemMoved', 'moved', hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
                 if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'moved item') then
-                    AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item', true)
+                    if AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item', true) then
+                        TriggerListener('ItemMoved', 'moved', hookData)
+                    end
                 end
             end
         end
