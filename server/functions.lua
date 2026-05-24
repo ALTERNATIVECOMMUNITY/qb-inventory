@@ -917,27 +917,41 @@ end
 exports('AddHook', AddHook)
 
 function RemoveHook(hookType, hookIdx)
-    if not hookType then return end
+    if not hookType or not hookIdx or not Events[hookType] then return end
     
     local hooks = Events[hookType]?.hooks
     if not hooks then return end
 
-    hooks[hookIdx] = nil
+    hooks[hookIdx] = false
 end
 
 exports('RemoveHook', RemoveHook)
 
-function TriggerHook(hookType, ...)
-    if not hookType then return end
+function AddListener(listenerType, callback)
+    if not listenerType or not callback then return end
+    if type(callback) == 'table' and not rawget(callback, '__cfx_functionReference') then return end
 
-    local hooks = Events[hookType]?.hooks
-    if not hooks then return end
-
-    for i = 1, #hooks do
-        -- TODO: Add further logic here, like filtering.
-        local _, response = pcall(hooks[i], ...)
-        if response == false then
-            return false
-        end
+    local listeners = Events[listenerType]?.listeners
+    if not listeners then
+        print('AddListener: Invalid listener type', listenerType)
+        return
     end
+
+    local listenerIdx = #listeners + 1
+    listeners[listenerIdx] = callback
+
+    return listenerIdx
 end
+
+exports('AddListener', AddListener)
+
+function RemoveListener(listenerType, listenerIdx)
+    if not listenerType or not listenerIdx or not Events[listenerType] then return end
+
+    local listeners = Events[listenerType]?.listeners
+    if not listeners then return end
+
+    listeners[listenerIdx] = false
+end
+
+exports('RemoveListener', RemoveListener)

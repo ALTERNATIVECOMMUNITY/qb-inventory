@@ -1,3 +1,33 @@
+function TriggerHook(hookType, ...)
+    if not hookType or not Events[hookType] then return end
+
+    local hooks = Events[hookType]?.hooks
+    if not hooks then return end
+
+    for i = 1, #hooks do
+        -- TODO: Add further logic here, like filtering.
+        local _, response = pcall(hooks[i], ...)
+        if response == false then
+            return false
+        end
+    end
+end
+
+function TriggerListener(listenerType, ...)
+    if not listenerType or not Events[listenerType] then return end
+
+    local listeners = Events[listenerType]?.listeners
+    if not listeners then return end
+
+    for i = 1, #listeners do
+        -- TODO: Add further logic here, like filtering.
+        local _, response = pcall(listeners[i], ...)
+        if response == false then
+            return false
+        end
+    end
+end
+
 -- Hook Helpers
 
 local function buildPlayerInventory(player)
