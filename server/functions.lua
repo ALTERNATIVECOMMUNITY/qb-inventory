@@ -902,7 +902,7 @@ function AddHook(hookType, callback)
     if not hookType or not callback then return end
     if type(callback) == 'table' and not rawget(callback, '__cfx_functionReference') then return end
 
-    local hooks = Hooks[hookType]
+    local hooks = Events[hookType]?.hooks
     if not hooks then
         print('AddHook: Invalid hook type', hookType)
         return
@@ -919,7 +919,7 @@ exports('AddHook', AddHook)
 function RemoveHook(hookType, hookIdx)
     if not hookType then return end
     
-    local hooks = Hooks[hookType]
+    local hooks = Events[hookType]?.hooks
     if not hooks then return end
 
     hooks[hookIdx] = nil
@@ -930,7 +930,7 @@ exports('RemoveHook', RemoveHook)
 function TriggerHook(hookType, ...)
     if not hookType then return end
 
-    local hooks = Hooks[hookType]
+    local hooks = Events[hookType]?.hooks
     if not hooks then return end
 
     for i = 1, #hooks do

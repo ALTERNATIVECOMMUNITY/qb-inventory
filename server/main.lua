@@ -2,13 +2,13 @@ QBCore = exports['qb-core']:GetCoreObject()
 Inventories = {}
 Drops = {}
 RegisteredShops = {}
-Hooks = {
-    ItemMoved = {},
-    ItemUsed = {},
-    ItemBought = {},
-    ItemAdded = {},
-    InventoryOpened = {},
-    ShopOpened = {},
+Events = {
+    ItemMoved = { hooks = {}, listeners = {} },
+    ItemUsed = { hooks = {}, listeners = {} },
+    ItemBought = { hooks = {}, listeners = {} },
+    ItemAdded = { hooks = {}, listeners = {} },
+    InventoryOpened = { hooks = {}, listeners = {} },
+    ShopOpened = { hooks = {}, listeners = {} },
 }
 
 CreateThread(function()
