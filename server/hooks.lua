@@ -107,7 +107,7 @@ local function buildShopData(shopType, shopId, itemSlot, amount, toId)
         toId = toId,
         item = itemData,
         amount = amount,
-        total = itemData.price * amount,
+        totalPrice = itemData.price * amount,
     }
 end
 
