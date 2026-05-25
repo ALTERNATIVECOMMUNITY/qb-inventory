@@ -20,6 +20,7 @@ RegisterNetEvent('QBCore:Client:UpdateObject', function()
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUpdated', function(key, val)
+    if key == 'items' then PlayerData.items = val return end
     if key ~= 'all' then return end
     PlayerData = val
 end)
