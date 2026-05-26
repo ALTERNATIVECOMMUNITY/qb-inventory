@@ -749,11 +749,11 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
         info = currentItem?.info or info or {},
         label = itemInfo.label,
         description = itemInfo.description or '',
-        weight = itemInfo.weight,
+        weight = currentItem?.weight or itemInfo.weight,
         type = itemInfo.type,
         unique = itemInfo.unique,
         useable = itemInfo.useable,
-        image = itemInfo.image,
+        image = currentItem?.weight or itemInfo.image,
         shouldClose = itemInfo.shouldClose,
         slot = slot or GetFirstFreeSlot(inventory, inventorySlots),
         combinable = itemInfo.combinable
@@ -811,8 +811,9 @@ exports('AddItem', AddItem)
 --- @param amount number - The amount of the item to remove.
 --- @param slot number - The slot number of the item in the inventory. If not provided, it will find the first slot with the item.
 --- @param reason string - The reason for removing the item. Defaults to 'No reason specified' if not provided.
+--- @param isInternalMove boolean (optional) Internal parameter suppresses the ItemAdded hook.
 --- @return boolean - Returns true if the item was successfully removed, false otherwise.
-function RemoveItem(identifier, item, amount, slot, reason)
+function RemoveItem(identifier, item, amount, slot, reason, isInternalMove)
     if not QBCore.Shared.Items[item:lower()] then
         print('RemoveItem: Invalid item')
         return false
@@ -863,6 +864,13 @@ function RemoveItem(identifier, item, amount, slot, reason)
         return false
     end
 
+    local hookData
+    local resourceName = GetInvokingResource() or 'qb-inventory'
+    if not isInternalMove then
+        hookData = buildHookData('ItemRemoved', identifier, inventoryItem, inventoryItem.slot, amount, player, reason, resourceName)
+        if TriggerHook('ItemRemoved', inventoryItem.type, hookData) == false then return false end
+    end
+
     inventoryItem.amount = inventoryItem.amount - amount
     if inventoryItem.amount <= 0 then
         inventory[itemKey] = nil
@@ -879,9 +887,10 @@ function RemoveItem(identifier, item, amount, slot, reason)
         end
     end
 
+    if hookData then TriggerListener('ItemRemoved', inventoryItem.type, hookData) end
+
     local invName = player and GetPlayerName(identifier) .. ' (' .. identifier .. ')' or identifier
     local removeReason = reason or 'No reason specified'
-    local resourceName = GetInvokingResource() or 'qb-inventory'
 
     TriggerEvent(
         'qb-log:server:CreateLog',

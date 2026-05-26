@@ -98,6 +98,20 @@ local function buildItemAddedData(identifier, item, slot, amount, player, reason
     }
 end
 
+local function buildItemRemovedData(identifier, item, slot, amount, player, reason, resource)
+    local inventoryType, inventoryData = resolveInventoryContext(identifier, identifier, player)
+    return {
+        fromId = identifier,
+        fromInventory = inventoryData,
+        fromType = inventoryType,
+        fromSlot = slot,
+        item = item,
+        amount = amount,
+        reason = reason,
+        resource = resource,
+    }
+end
+
 local function buildShopData(shopType, shopId, itemSlot, amount, toId)
     local shopData = RegisteredShops[shopId]
     local itemData = shopData.items[itemSlot]
@@ -147,6 +161,7 @@ local hookBuilders = {
     ItemUsed = buildUsedData,
     ItemBought = buildShopData,
     ItemAdded = buildItemAddedData,
+    ItemRemoved = buildItemRemovedData,
     InventoryOpened = buildOpenedData,
     ShopOpened = buildShopOpenedData,
 }
