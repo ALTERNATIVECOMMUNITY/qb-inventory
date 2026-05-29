@@ -198,7 +198,8 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
         local players = QBCore.Functions.GetPlayers()
-        local gender = item.info.gender == 0 and 'Male' or 'Female'
+        local info = itemData.info or item.info or {}
+        local gender = info.gender == 0 and 'Male' or 'Female'
         for _, v in pairs(players) do
             local targetPed = GetPlayerPed(v)
             local dist = #(playerCoords - GetEntityCoords(targetPed))
@@ -207,12 +208,12 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
                     template = '<div class="chat-message advert" style="background: linear-gradient(to right, rgba(5, 5, 5, 0.6), #74807c); display: flex;"><div style="margin-right: 10px;"><i class="far fa-id-card" style="height: 100%;"></i><strong> {0}</strong><br> <strong>Civ ID:</strong> {1} <br><strong>First Name:</strong> {2} <br><strong>Last Name:</strong> {3} <br><strong>Birthdate:</strong> {4} <br><strong>Gender:</strong> {5} <br><strong>Nationality:</strong> {6}</div></div>',
                     args = {
                         'ID Card',
-                        item.info.citizenid,
-                        item.info.firstname,
-                        item.info.lastname,
-                        item.info.birthdate,
+                        info.citizenid,
+                        info.firstname,
+                        info.lastname,
+                        info.birthdate,
                         gender,
-                        item.info.nationality
+                        info.nationality
                     }
                 })
             end
@@ -223,6 +224,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
         local players = QBCore.Functions.GetPlayers()
+        local info = itemData.info or item.info or {}
         for _, v in pairs(players) do
             local targetPed = GetPlayerPed(v)
             local dist = #(playerCoords - GetEntityCoords(targetPed))
@@ -231,10 +233,10 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
                     template = '<div class="chat-message advert" style="background: linear-gradient(to right, rgba(5, 5, 5, 0.6), #657175); display: flex;"><div style="margin-right: 10px;"><i class="far fa-id-card" style="height: 100%;"></i><strong> {0}</strong><br> <strong>First Name:</strong> {1} <br><strong>Last Name:</strong> {2} <br><strong>Birth Date:</strong> {3} <br><strong>Licenses:</strong> {4}</div></div>',
                     args = {
                         'Drivers License',
-                        item.info.firstname,
-                        item.info.lastname,
-                        item.info.birthdate,
-                        item.info.type
+                        info.firstname,
+                        info.lastname,
+                        info.birthdate,
+                        info.type
                     }
                 }
                 )
