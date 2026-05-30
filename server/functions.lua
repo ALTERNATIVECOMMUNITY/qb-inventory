@@ -753,7 +753,7 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
         type = itemInfo.type,
         unique = itemInfo.unique,
         useable = itemInfo.useable,
-        image = currentItem?.weight or itemInfo.image,
+        image = currentItem?.image or itemInfo.image,
         shouldClose = itemInfo.shouldClose,
         slot = slot or GetFirstFreeSlot(inventory, inventorySlots),
         combinable = itemInfo.combinable
