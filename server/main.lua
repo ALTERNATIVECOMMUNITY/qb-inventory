@@ -99,12 +99,12 @@ AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
     local Players = QBCore.Functions.GetQBPlayers()
     for k in pairs(Players) do
-        QBCore.Functions.AddPlayerMethod(k, 'AddItem', function(item, amount, slot, info)
-            return AddItem(k, item, amount, slot, info)
+        QBCore.Functions.AddPlayerMethod(k, 'AddItem', function(item, amount, slot, info, reason)
+            return AddItem(k, item, amount, slot, info, reason)
         end)
 
-        QBCore.Functions.AddPlayerMethod(k, 'RemoveItem', function(item, amount, slot)
-            return RemoveItem(k, item, amount, slot)
+        QBCore.Functions.AddPlayerMethod(k, 'RemoveItem', function(item, amount, slot, reason)
+            return RemoveItem(k, item, amount, slot, reason)
         end)
 
         QBCore.Functions.AddPlayerMethod(k, 'GetItemBySlot', function(slot)
