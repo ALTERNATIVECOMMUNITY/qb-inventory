@@ -883,9 +883,3 @@ function RemoveItem(identifier, item, amount, slot, reason)
 end
 
 exports('RemoveItem', RemoveItem)
-
-function GetInventory(identifier)
-    return Inventories[identifier]
-end
-
-exports('GetInventory', GetInventory)
