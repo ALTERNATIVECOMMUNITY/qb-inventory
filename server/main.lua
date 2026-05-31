@@ -131,6 +131,22 @@ AddEventHandler('onResourceStart', function(resourceName)
     end
 end)
 
+AddEventHandler('onResourceStop', function(resourceName)
+    for _, eventData in pairs(Events) do
+        for i = 1, #eventData.hooks do
+            if eventData.hooks[i] and eventData.hooks[i].resource == resourceName then
+                eventData.hooks[i] = false
+            end
+        end
+
+        for i = 1, #eventData.listeners do
+            if eventData.listeners[i] and eventData.listeners[i].resource == resourceName then
+                eventData.listeners[i]= false
+            end
+        end
+    end
+end)
+
 -- Functions
 
 function checkWeapon(source, item)

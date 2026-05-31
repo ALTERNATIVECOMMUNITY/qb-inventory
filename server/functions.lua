@@ -925,7 +925,7 @@ function AddHook(hookType, callback)
     end
 
     local hookIdx = #hooks + 1
-    hooks[hookIdx] = callback
+    hooks[hookIdx] = { fn = callback, resource = GetInvokingResource() }
 
     return hookIdx
 end
@@ -954,7 +954,7 @@ function AddListener(listenerType, callback)
     end
 
     local listenerIdx = #listeners + 1
-    listeners[listenerIdx] = callback
+    listeners[listenerIdx] = { fn = callback, resource = GetInvokingResource() }
 
     return listenerIdx
 end

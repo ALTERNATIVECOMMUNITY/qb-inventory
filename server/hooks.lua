@@ -7,7 +7,7 @@ function TriggerHook(hookType, ...)
     for i = 1, #hooks do
         -- TODO: Add further logic here, like filtering.
         if hooks[i] then
-            local _, response = pcall(hooks[i], ...)
+            local _, response = pcall(hooks[i].fn, ...)
             if response == false then
                 return false
             end
@@ -24,7 +24,7 @@ function TriggerListener(listenerType, ...)
     for i = 1, #listeners do
         -- TODO: Add further logic here, like filtering.
         if listeners[i] then
-            pcall(listeners[i], ...)
+            pcall(listeners[i].fn, ...)
         end
     end
 end
