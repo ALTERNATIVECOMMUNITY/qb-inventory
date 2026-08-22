@@ -914,6 +914,10 @@ end
 
 exports('GetInventory', GetInventory)
 
+--- Registers a hook that can cancel the associated event by returning false.
+--- @param hookType 'ItemMoved'|'ItemDropped'|'ItemUsed'|'ItemBought'|'ItemAdded'|'ItemRemoved'|'InventoryOpened'|'ShopOpened' - The event type to hook into.
+--- @param callback fun(...): boolean|nil - Callback invoked before the event executes. Return false to cancel it.
+--- @return number|nil hookIdx - Index used to remove the hook later, or nil if registration failed.
 function AddHook(hookType, callback)
     if not hookType or not callback then return end
     if type(callback) == 'table' and not rawget(callback, '__cfx_functionReference') then return end
@@ -932,9 +936,12 @@ end
 
 exports('AddHook', AddHook)
 
+--- Removes a previously registered hook.
+--- @param hookType 'ItemMoved'|'ItemDropped'|'ItemUsed'|'ItemBought'|'ItemAdded'|'ItemRemoved'|'InventoryOpened'|'ShopOpened' - The event type the hook was registered on.
+--- @param hookIdx number - The index returned by AddHook.
 function RemoveHook(hookType, hookIdx)
     if not hookType or not hookIdx or not Events[hookType] then return end
-    
+
     local hooks = Events[hookType]?.hooks
     if not hooks then return end
 
@@ -943,6 +950,10 @@ end
 
 exports('RemoveHook', RemoveHook)
 
+--- Registers a listener that is notified after an event executes (cannot cancel it).
+--- @param listenerType 'ItemMoved'|'ItemDropped'|'ItemUsed'|'ItemBought'|'ItemAdded'|'ItemRemoved'|'InventoryOpened'|'ShopOpened' - The event type to listen to.
+--- @param callback fun(...) - Callback invoked after the event executes. Return value is ignored.
+--- @return number|nil listenerIdx - Index used to remove the listener later, or nil if registration failed.
 function AddListener(listenerType, callback)
     if not listenerType or not callback then return end
     if type(callback) == 'table' and not rawget(callback, '__cfx_functionReference') then return end
@@ -961,6 +972,9 @@ end
 
 exports('AddListener', AddListener)
 
+--- Removes a previously registered listener.
+--- @param listenerType 'ItemMoved'|'ItemDropped'|'ItemUsed'|'ItemBought'|'ItemAdded'|'ItemRemoved'|'InventoryOpened'|'ShopOpened' - The event type the listener was registered on.
+--- @param listenerIdx number - The index returned by AddListener.
 function RemoveListener(listenerType, listenerIdx)
     if not listenerType or not listenerIdx or not Events[listenerType] then return end
 
