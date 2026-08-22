@@ -4,15 +4,22 @@ function TriggerHook(hookType, ...)
     local hooks = Events[hookType]?.hooks
     if not hooks then return end
 
+    local result
     for i = 1, #hooks do
         -- TODO: Add further logic here, like filtering.
         if hooks[i] then
-            local _, response = pcall(hooks[i].fn, ...)
-            if response == false then
-                return false
+            local ok, response = pcall(hooks[i].fn, ...)
+            if ok then
+                if response == false then
+                    return false
+                elseif response ~= nil then
+                    result = response -- last hook to return a non-nil, non-false value wins
+                end
             end
         end
     end
+
+    return result
 end
 
 function TriggerListener(listenerType, ...)
