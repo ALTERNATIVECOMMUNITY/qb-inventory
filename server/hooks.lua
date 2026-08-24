@@ -38,6 +38,15 @@ end
 
 -- Hook Helpers
 
+local function shallowCopy(t)
+    if not t then return t end
+    local copy = {}
+    for k, v in pairs(t) do
+        copy[k] = v
+    end
+    return copy
+end
+
 local function buildPlayerInventory(player)
     return {
         slots = Config.MaxSlots,
@@ -107,12 +116,14 @@ end
 
 local function buildItemRemovedData(identifier, item, slot, amount, player, reason, resource)
     local inventoryType, inventoryData = resolveInventoryContext(identifier, identifier, player)
+    local itemCopy = shallowCopy(item)
+    itemCopy.amount = amount
     return {
         fromId = identifier,
         fromInventory = inventoryData,
         fromType = inventoryType,
         fromSlot = slot,
-        item = item,
+        item = itemCopy,
         amount = amount,
         reason = reason,
         resource = resource,

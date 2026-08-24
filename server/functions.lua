@@ -745,18 +745,18 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
     local currentItem = slot and inventory[slot]
     local pendingItem = {
         name = item,
-        amount = currentItem and (not currentItem.unique and currentItem.amount + amount) or amount,
-        info = currentItem?.info or info or {},
+        amount = amount,
+        info = info or {},
         label = itemInfo.label,
         description = itemInfo.description or '',
-        weight = currentItem?.weight or itemInfo.weight,
+        weight = itemInfo.weight,
         type = itemInfo.type,
         unique = itemInfo.unique,
         useable = itemInfo.useable,
-        image = currentItem?.image or itemInfo.image,
+        image = itemInfo.image,
         shouldClose = itemInfo.shouldClose,
         slot = slot or GetFirstFreeSlot(inventory, inventorySlots),
-        combinable = itemInfo.combinable
+        combinable = itemInfo.combinable,
     }
     slot = pendingItem.slot
     if not slot then
@@ -781,9 +781,15 @@ function AddItem(identifier, item, amount, slot, info, reason, isInternalMove)
         if mutatedInfo == false then return false end
         if type(mutatedInfo) == 'table' then
             pendingItem.info = mutatedInfo
+            if currentItem then currentItem.info = mutatedInfo end
         end
     end
-    inventory[slot] = pendingItem
+    if currentItem and not currentItem.unique then
+        currentItem.amount = currentItem.amount + amount
+        inventory[slot] = currentItem
+    else
+        inventory[slot] = pendingItem
+    end
 
     if player then player.SetPlayerData('items', inventory) end
     if hookData then TriggerListener('ItemAdded', pendingItem.type, hookData) end
