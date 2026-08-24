@@ -83,12 +83,15 @@ local function buildMovedData(fromInventory, toInventory, fromId, toId, fromSlot
     }
 end
 
-local function buildItemDroppedData(source, player, coords, slot)
+local function buildItemDroppedData(source, player, coords, slot, amount)
+    local itemCopy = shallowCopy(player.PlayerData.items[slot])
+    if itemCopy then itemCopy.amount = amount end
     return {
         source = source,
         sourceInventory = buildPlayerInventory(player),
         coords = coords,
-        item = shallowCopy(player.PlayerData.items[slot]),
+        item = itemCopy,
+        amount = amount,
     }
 end
 

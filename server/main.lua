@@ -324,7 +324,7 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
     end
     local playerPed = GetPlayerPed(src)
     local playerCoords = GetEntityCoords(playerPed)
-    local hookData = buildHookData('ItemDropped', src, Player, playerCoords, item.fromSlot)
+    local hookData = buildHookData('ItemDropped', src, Player, playerCoords, item.fromSlot, item.amount)
     if not hookData.item then cb(false) return end
     if TriggerHook('ItemDropped', hookData.item.type, hookData) == false then cb(false) return end
     if RemoveItem(src, item.name, item.amount, item.fromSlot, 'dropped item') then
