@@ -149,7 +149,7 @@ div {
     align-content: flex-start;
     width: 100%;
     box-sizing: border-box;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .item-slot {
@@ -157,7 +157,7 @@ div {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(20% - 2px);
+    width: calc(20% - 1.6px);
     height: 10vh;
     background-color: rgba(30, 30, 30, 0.6);
     border: 1px solid rgba(80, 80, 80, 0.5);
@@ -275,6 +275,20 @@ div {
     color: var(--on-primary-container);
     font-size: 0.7vh;
     text-align: center;
+}
+
+@keyframes item-error-shake {
+    0%   { transform: translateX(0); }
+    5%   { transform: translateX(-3px); }
+    15%  { transform: translateX(2px);  }
+    25%  { transform: translateX(-2px); }
+    35%  { transform: translateX(2px);  }
+    45%  { transform: translateX(-1px); }
+    50%  { transform: translateX(0); background-color: var(--error-container); }
+}
+
+.item-slot.error {
+    animation: item-error-shake 1s ease-out forwards;
 }
 
 /* Weight Bar Styles */

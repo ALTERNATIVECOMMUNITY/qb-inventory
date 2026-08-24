@@ -132,15 +132,23 @@ RegisterNetEvent('qb-inventory:client:closeInv', function()
     })
 end)
 
-RegisterNetEvent('qb-inventory:client:updateInventory', function()
+RegisterNetEvent('qb-inventory:client:updateInventory', function(fromInventory, toInventory, fromItems, toItems, errorSlot)
+    fromInventory = fromInventory or 'player'
+    toInventory = toInventory or 'player'
+
     local items = {}
     if PlayerData and type(PlayerData.items) == "table" then
         items = PlayerData.items
     end
 
+    local otherItems = (toInventory ~= 'player' and toItems or fromInventory ~= 'player' and fromItems) or nil
+
     SendNUIMessage({
         action = 'update',
-        inventory = items
+        inventory = items,
+        otherItems = otherItems,
+        errorInventory = errorSlot and fromInventory or nil, -- assumes error origin, only meaningful alongside errorSlot
+        errorSlot = errorSlot,
     })
 end)
 

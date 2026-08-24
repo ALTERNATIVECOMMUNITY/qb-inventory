@@ -2,6 +2,16 @@ QBCore = exports['qb-core']:GetCoreObject()
 Inventories = {}
 Drops = {}
 RegisteredShops = {}
+Events = {
+    ItemMoved = { hooks = {}, listeners = {} },
+    ItemDropped = { hooks = {}, listeners = {} },
+    ItemUsed = { hooks = {}, listeners = {} },
+    ItemBought = { hooks = {}, listeners = {} },
+    ItemAdded = { hooks = {}, listeners = {} },
+    ItemRemoved = { hooks = {}, listeners = {} },
+    InventoryOpened = { hooks = {}, listeners = {} },
+    ShopOpened = { hooks = {}, listeners = {} },
+}
 
 CreateThread(function()
     MySQL.query('SELECT * FROM inventories', {}, function(result)
@@ -89,12 +99,12 @@ AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
     local Players = QBCore.Functions.GetQBPlayers()
     for k in pairs(Players) do
-        QBCore.Functions.AddPlayerMethod(k, 'AddItem', function(item, amount, slot, info)
-            return AddItem(k, item, amount, slot, info)
+        QBCore.Functions.AddPlayerMethod(k, 'AddItem', function(item, amount, slot, info, reason)
+            return AddItem(k, item, amount, slot, info, reason)
         end)
 
-        QBCore.Functions.AddPlayerMethod(k, 'RemoveItem', function(item, amount, slot)
-            return RemoveItem(k, item, amount, slot)
+        QBCore.Functions.AddPlayerMethod(k, 'RemoveItem', function(item, amount, slot, reason)
+            return RemoveItem(k, item, amount, slot, reason)
         end)
 
         QBCore.Functions.AddPlayerMethod(k, 'GetItemBySlot', function(slot)
@@ -118,6 +128,22 @@ AddEventHandler('onResourceStart', function(resourceName)
         end)
 
         Player(k).state.inv_busy = false
+    end
+end)
+
+AddEventHandler('onResourceStop', function(resourceName)
+    for _, eventData in pairs(Events) do
+        for i = 1, #eventData.hooks do
+            if eventData.hooks[i] and eventData.hooks[i].resource == resourceName then
+                eventData.hooks[i] = false
+            end
+        end
+
+        for i = 1, #eventData.listeners do
+            if eventData.listeners[i] and eventData.listeners[i].resource == resourceName then
+                eventData.listeners[i]= false
+            end
+        end
     end
 end)
 
@@ -190,10 +216,13 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
     if not itemData then return end
     local itemInfo = QBCore.Shared.Items[itemData.name]
     if itemData.type == 'weapon' then
+        local hookData = buildHookData('ItemUsed', source, exports['qb-core']:GetPlayer(source), itemData)
+        if TriggerHook('ItemUsed', item.type, hookData) == false then return end
         TriggerClientEvent('qb-weapons:client:UseWeapon', src, itemData, itemData.info.quality and itemData.info.quality > 0)
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
+        TriggerListener('ItemUsed', item.type, hookData)
     elseif itemData.name == 'id_card' then
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', source, itemInfo, 'use')
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
@@ -219,7 +248,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
             end
         end
     elseif itemData.name == 'driver_license' then
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
         local playerPed = GetPlayerPed(src)
         local playerCoords = GetEntityCoords(playerPed)
@@ -243,7 +272,7 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
             end
         end
     else
-        UseItem(itemData.name, src, itemData)
+        if UseItem(itemData.name, src, itemData) == false then return end
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
     end
 end)
@@ -297,6 +326,9 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
     end
     local playerPed = GetPlayerPed(src)
     local playerCoords = GetEntityCoords(playerPed)
+    local hookData = buildHookData('ItemDropped', src, Player, playerCoords, item.fromSlot, item.amount)
+    if not hookData.item then cb(false) return end
+    if TriggerHook('ItemDropped', hookData.item.type, hookData) == false then cb(false) return end
     if RemoveItem(src, item.name, item.amount, item.fromSlot, 'dropped item') then
         if item.type == 'weapon' then checkWeapon(src, item) end
         TaskPlayAnim(playerPed, 'pickup_object', 'pickup_low', 8.0, -8.0, 2000, 0, 0, false, false, false)
@@ -310,6 +342,8 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
                 return length
             end
         })
+        hookData.dropId = newDropId
+        hookData.netId = dropId
         if not Drops[newDropId] then
             Drops[newDropId] = {
                 name = newDropId,
@@ -326,6 +360,8 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
         else
             table.insert(Drops[newDropId].items, item)
         end
+        RefreshInventorySnapshot(hookData, 'sourceInventory', src)
+        TriggerListener('ItemDropped', hookData.item.type, hookData)
         cb(dropId)
     else
         cb(false)
@@ -380,10 +416,14 @@ QBCore.Functions.CreateCallback('qb-inventory:server:attemptPurchase', function(
 
     local price = shopInfo.items[itemInfo.slot].price * amount
     if Player.PlayerData.money.cash >= price then
+        local shopType = GetInventoryType(shop)
+        local hookData = buildHookData('ItemBought', shopType, shop, itemInfo.slot, amount, source)
+        if TriggerHook('ItemBought', shopType, hookData) == false then cb(false) return end
         Player.Functions.RemoveMoney('cash', price, 'shop-purchase')
         AddItem(source, itemInfo.name, amount, nil, itemInfo.info, 'shop-purchase')
         shopInfo.items[itemInfo.slot].amount -= amount
         TriggerEvent('qb-shops:server:UpdateShopItems', shop, itemInfo, amount)
+        TriggerListener('ItemBought', shopType, hookData)
         cb(true)
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t('notify.notencash'), 'error')
@@ -437,6 +477,9 @@ QBCore.Functions.CreateCallback('qb-inventory:server:giveItem', function(source,
         return
     end
 
+    local hookData = buildHookData('ItemMoved', 'player', 'player', source, target, slot, nil, amount, player, Target)
+    if TriggerHook('ItemMoved', 'given', hookData) == false then cb(false) return end
+
     local removeItem = RemoveItem(source, item, giveAmount, slot, 'Item given to ID #' .. target)
     if not removeItem then
         cb(false)
@@ -455,6 +498,9 @@ QBCore.Functions.CreateCallback('qb-inventory:server:giveItem', function(source,
     TriggerClientEvent('qb-inventory:client:giveAnim', target)
     TriggerClientEvent('qb-inventory:client:ItemBox', target, itemInfo, 'add', giveAmount)
     if Player(target).state.inv_busy then TriggerClientEvent('qb-inventory:client:updateInventory', target) end
+    RefreshInventorySnapshot(hookData, 'fromInventory', source)
+    RefreshInventorySnapshot(hookData, 'toInventory', target)
+    TriggerListener('ItemMoved', 'given', hookData)
     cb(true)
 end)
 
@@ -520,28 +566,49 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
         local fromId = getIdentifier(fromInventory, src)
         local toId = getIdentifier(toInventory, src)
 
+        local hookData = buildHookData('ItemMoved', fromInventory, toInventory, fromId, toId, fromSlot, toSlot, toAmount, Player)
+        local moveType, succeeded
+
         if toItem and fromItem.name == toItem.name then
-            if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'stacked item') then
-                AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item')
+            moveType = 'stacked'
+            if TriggerHook('ItemMoved', moveType, hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
+
+            if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'stacked item', true) then
+                succeeded = AddItem(toId, toItem.name, toAmount, toSlot, toItem.info, 'stacked item', true)
             end
         elseif not toItem and toAmount < fromAmount then
-            if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'split item') then
-                AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item')
+            moveType = 'split'
+            if TriggerHook('ItemMoved', moveType, hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
+
+            if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'split item', true) then
+                succeeded = AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'split item', true)
             end
         else
             if toItem then
+                moveType = 'swapped'
                 local fromItemAmount = fromItem.amount
                 local toItemAmount = toItem.amount
+                if TriggerHook('ItemMoved', moveType, hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
 
-                if RemoveItem(fromId, fromItem.name, fromItemAmount, fromSlot, 'swapped item') and RemoveItem(toId, toItem.name, toItemAmount, toSlot, 'swapped item') then
-                    AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item')
-                    AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item')
+                if RemoveItem(fromId, fromItem.name, fromItemAmount, fromSlot, 'swapped item', true) and RemoveItem(toId, toItem.name, toItemAmount, toSlot, 'swapped item', true) then
+                    local fromAdded = AddItem(toId, fromItem.name, fromItemAmount, toSlot, fromItem.info, 'swapped item', true)
+                    local toAdded = AddItem(fromId, toItem.name, toItemAmount, fromSlot, toItem.info, 'swapped item', true)
+                    succeeded = fromAdded and toAdded
                 end
             else
-                if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'moved item') then
-                    AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item')
+                moveType = 'moved'
+                if TriggerHook('ItemMoved', moveType, hookData) == false then TriggerClientEvent('qb-inventory:client:updateInventory', src, fromInventory, toInventory, hookData.fromInventory?.items, hookData.toInventory?.items, fromSlot) return end
+
+                if RemoveItem(fromId, fromItem.name, toAmount, fromSlot, 'moved item', true) then
+                    succeeded = AddItem(toId, fromItem.name, toAmount, toSlot, fromItem.info, 'moved item', true)
                 end
             end
+        end
+
+        if succeeded then
+            RefreshInventorySnapshot(hookData, 'fromInventory', fromId)
+            RefreshInventorySnapshot(hookData, 'toInventory', toId)
+            TriggerListener('ItemMoved', moveType, hookData)
         end
     end
 end)

@@ -185,6 +185,27 @@ const InventoryContainer = Vue.createApp({
                     }
                 }
             }
+
+            if (data.otherItems) {
+                this.otherInventory = {};
+                if (Array.isArray(data.otherItems)) {
+                    data.otherItems.forEach((item) => {
+                        if (item && item.slot) {
+                            this.otherInventory[item.slot] = item;
+                        }
+                    });
+                } else if (typeof data.otherItems === "object") {
+                    for (const key in data.otherItems) {
+                        const item = data.otherItems[key];
+                        if (item && item.slot) {
+                            this.otherInventory[item.slot] = item;
+                        }
+                    }
+                }
+            }
+
+            if (data.errorSlot)
+                this.inventoryError(data.errorSlot, data.errorInventory); // pass from inventory for from errors
         },
         async closeInventory() {
             this.clearDragData();
@@ -521,7 +542,7 @@ const InventoryContainer = Vue.createApp({
                     const targetInventory = this.getInventoryByType("player");
                     const amountToTransfer = transferAmount !== null ? transferAmount : sourceItem.amount;
                     if (sourceItem.amount < amountToTransfer) {
-                        this.inventoryError(sourceSlot);
+                        this.inventoryError(sourceSlot, "other");
                         return;
                     }
                     let targetItem = targetInventory[targetSlot];
@@ -784,17 +805,17 @@ const InventoryContainer = Vue.createApp({
                 }, 100);
             }
         },
-        inventoryError(slot) {
-            const slotElement = document.getElementById(`slot-${slot}`);
+        inventoryError(slot, inventory = "player") {
+            const slotElement = document.querySelector(`.${inventory == "player" ? "player" : "other"}-inventory-section [data-slot="${slot}"]`);
             if (slotElement) {
-                slotElement.style.backgroundColor = "red";
+                slotElement.classList.add("error");
             }
             axios.post("https://qb-inventory/PlayDropFail", {}).catch((error) => {
                 console.error("Error playing drop fail:", error);
             });
             setTimeout(() => {
                 if (slotElement) {
-                    slotElement.style.backgroundColor = "";
+                    slotElement.classList.remove("error");
                 }
             }, 1000);
         },
