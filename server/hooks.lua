@@ -88,7 +88,7 @@ local function buildItemDroppedData(source, player, coords, slot)
         source = source,
         sourceInventory = buildPlayerInventory(player),
         coords = coords,
-        item = player.PlayerData.items[slot],
+        item = shallowCopy(player.PlayerData.items[slot]),
     }
 end
 
@@ -96,7 +96,7 @@ local function buildUsedData(source, player, item)
     return {
         source = source,
         sourceInventory = buildPlayerInventory(player),
-        item = item,
+        item = shallowCopy(item),
     }
 end
 
@@ -137,7 +137,7 @@ local function buildShopData(shopType, shopId, itemSlot, amount, toId)
         shopType = shopType,
         shop = shopData,
         toId = toId,
-        item = itemData,
+        item = shallowCopy(itemData),
         amount = amount,
         totalPrice = itemData.price * amount,
     }
