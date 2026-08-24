@@ -915,12 +915,6 @@ end
 
 exports('RemoveItem', RemoveItem)
 
-function GetInventory(identifier)
-    return Inventories[identifier]
-end
-
-exports('GetInventory', GetInventory)
-
 --- Registers a hook that can cancel the associated event by returning false.
 --- @param hookType 'ItemMoved'|'ItemDropped'|'ItemUsed'|'ItemBought'|'ItemAdded'|'ItemRemoved'|'InventoryOpened'|'ShopOpened' - The event type to hook into.
 --- @param callback fun(...): boolean|nil - Callback invoked before the event executes. Return false to cancel it.
