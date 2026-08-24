@@ -202,6 +202,7 @@ function UseItem(itemName, source, item, ...)
     if type(itemData) == 'table' and itemData.func then
         itemData.func(source, item, ...)
     end
+    RefreshInventorySnapshot(hookData, 'sourceInventory', source)
     TriggerListener('ItemUsed', item.type, hookData)
 end
 

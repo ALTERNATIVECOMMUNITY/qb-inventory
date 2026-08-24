@@ -176,6 +176,19 @@ function GetInventoryType(identifier)
     if shopData then return shopData.type or (shopData.name:gsub('%d+$', '')) end -- infer type from name if necessary
 end
 
+--- Re-fetches a player-type inventory snapshot for the listener, since the snapshot
+--- is captured before a mutation.
+--- @param payload table - the hook/listener payload to update in place
+--- @param field string - the payload key holding the InventorySnapshot
+--- @param identifier number|string - the identifier to re-resolve (player id, 'otherplayer-x', etc.)
+function RefreshInventorySnapshot(payload, field, identifier)
+    if not payload or not payload[field] then return payload end
+    if GetInventoryType(identifier) ~= 'player' then return payload end
+    local player = exports['qb-core']:GetPlayer(identifier)
+    payload[field] = buildPlayerInventory(player)
+    return payload
+end
+
 local hookBuilders = {
     ItemMoved = buildMovedData,
     ItemDropped = buildItemDroppedData,
